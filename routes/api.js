@@ -1,9 +1,12 @@
-/**ROUTE USER APIs. */
-var express = require('express')
+const express = require('express');
+const router = express.Router();
 
-var router = express.Router()
-var users = require('./api/user.route')
-
-router.use('/users', users);
+router.get('/status', (req, res) => {
+  res.json({
+    message: '✅ API funcionando correctamente',
+    timestamp: new Date()
+  });
+});
 
 module.exports = router;
+

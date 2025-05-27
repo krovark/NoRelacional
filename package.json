@@ -1,28 +1,24 @@
 {
-  "name": "mi-app-apilunes",
+  "name": "redsocial-norelacional",
   "version": "1.0.0",
-  "private": true,
+  "description": "Proyecto con conexión a MongoDB, Redis y Neo4j",
+  "main": "app.js",
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js"
   },
+  
+  "author": "TuNombre",
+  "license": "ISC",
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "bluebird": "^3.7.2",
-    "cloudinary": "^1.41.0",
-    "cookie-parser": "^1.4.6",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
-    "dotenv": "^16.5.1",
-    "express": "^4.18.4",
-    "formidable": "^2.2.1",
-    "http-errors": "^2.0.0",
-    "jade": "^1.11.0",
-    "jsonwebtoken": "^9.0.2",
-    "mongoose": "^7.6.1",
-    "mongoose-paginate-v2": "^1.7.1",
-    "morgan": "^1.10.0",
-    "nodemailer": "^6.9.8",
-    "to": "^0.2.9"
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "mongoose": "^7.8.7",
+    "neo4j-driver": "^5.28.1",
+    "redis": "^4.7.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

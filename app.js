@@ -1,26 +1,30 @@
-//Express
-var express = require('express');
-var cookieParser = require('cookie-parser');
-var bluebird = require('bluebird');
+// Express
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const bluebird = require('bluebird');
 require('dotenv').config();
 
-//incorporo cors
-var cors = require('cors');
+// Conexiones a bases de datos
+const connectMongo = require('./database/mongo');
+const { connectRedis } = require('./database/redis');
+const { connectNeo4j } = require('./database/neo');
 
-//importo router
-var indexRouter = require('./routes/index');
-var apiRouter = require('./routes/api'); //Custom
+// Middlewares
+const cors = require('cors');
 
-//instancio el servidor
-var app = express();
+// Routers
+const indexRouter = require('./routes/index');
+const apiRouter = require('./routes/api');
+
+// Instancia de Express
+const app = express();
+
+// Configuración de middleware
 app.use(express.json());
-app.use(express.urlencoded({
-  extended: false
-}));
-
-//aplico cors
-app.use(cors());
+app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
+app.use(cors());
+
 app.use(function (req, res, next) {
   res.header("Access-Control-Allow-Origin", "http://localhost:4000");
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -28,49 +32,25 @@ app.use(function (req, res, next) {
   next();
 });
 
-//Indico las rutas de los endpoint
+// Rutas
 app.use('/api', apiRouter);
 app.use('/', indexRouter);
 
-// Load additional configuration if in Development mode
+// Cargar configuración adicional en modo desarrollo
 if (process.env.NODE_ENV === 'Development') {
   require('./config').config();
 }
 
-//Database connection --
-const mongoose = require('mongoose');
-mongoose.Promise = require('bluebird');
+// Conexiones a bases de datos
+connectMongo();
+connectRedis();
+connectNeo4j();
 
-const {
-  DB_USER,
-  DB_PASSWORD,
-  DB_HOST,
-  DB_NAME,
-  DB_RETRY_WRITES,
-  DB_WRITE_CONCERN,
-  DB_APP_NAME
-} = process.env;
-
-const url = `mongodb+srv://${DB_USER}:${DB_PASSWORD}@${DB_HOST}/${DB_NAME}?retryWrites=${DB_RETRY_WRITES}&w=${DB_WRITE_CONCERN}&appName=${DB_APP_NAME}`;
-
-console.log("MongoDB URL:", url);
-
-const opts = {
-
-  connectTimeoutMS: 20000,
-};
-
-mongoose.connect(url, opts)
-  .then(() => console.log('Successfully connected to MongoDB'))
-  .catch((e) => {
-    console.error('Error connecting to MongoDB:', e);
-  });
-
-// Setup server port
-var port = process.env.PORT || 8080;
-// Escuchar en el puerto
+// Puerto
+const port = process.env.PORT || 8080;
 app.listen(port, () => {
-  console.log('Servidor de ABM Users iniciado en el puerto ', port);
+  console.log(`🚀 Servidor iniciado en el puerto ${port}`);
 });
 
 module.exports = app;
+
