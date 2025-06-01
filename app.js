@@ -52,5 +52,14 @@ app.listen(port, () => {
   console.log(`🚀 Servidor iniciado en el puerto ${port}`);
 });
 
+// Documentación Swagger
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger/swaggerConfig');
+
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.get('/swagger.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.send(swaggerSpec);
+});
 module.exports = app;
 

@@ -7,18 +7,22 @@
     "start": "node app.js",
     "dev": "nodemon app.js"
   },
-  
   "author": "TuNombre",
   "license": "ISC",
   "dependencies": {
+    "bcrypt": "^6.0.0",
     "bluebird": "^3.7.2",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
     "mongoose": "^7.8.7",
     "neo4j-driver": "^5.28.1",
-    "redis": "^4.7.1"
+    "redis": "^4.7.1",
+    "redsocial-norelacional": "file:",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.10"

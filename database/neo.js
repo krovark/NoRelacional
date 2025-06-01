@@ -1,3 +1,4 @@
+// database/neo.js
 const neo4j = require('neo4j-driver');
 require('dotenv').config();
 
@@ -14,7 +15,9 @@ const connectNeo4j = () => {
     .catch((err) => console.error('❌ Error al conectar a Neo4j:', err));
 };
 
+const getDriver = () => driver;
+
 module.exports = {
   connectNeo4j,
-  getDriver: () => driver
+  getDriver
 };

@@ -1,126 +1,35 @@
-// Gettign the Newly created Mongoose Model we just created 
-var User = require('../models/User.model');
-var bcrypt = require('bcryptjs');
-var jwt = require('jsonwebtoken');
+// services/userService.js
+const User = require('../models/User.model');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
+const { getRedisClient } = require('../database/redis'); // ← Desestructuramos
 
-// Saving the context of this module inside the _the variable
-_this = this
+exports.register = async ({ username, email, password }) => {
+  const userExists = await User.findOne({ email });
+  if (userExists) throw new Error('Email already in use');
 
-// Async function to get the User List
-exports.getUsers = async function (query, page, limit) {
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = new User({ username, email, password: hashedPassword });
+  return await user.save();
+};
 
-    // Options setup for the mongoose paginate
-    var options = {
-        page,
-        limit
-    }
-    // Try Catch the awaited promise to handle the error 
-    try {
-        console.log("Query",query)
-        var Users = await User.paginate(query, options)
-        // Return the Userd list that was retured by the mongoose promise
-        return Users;
+exports.login = async ({ email, password }) => {
+  const user = await User.findOne({ email });
+  if (!user || !(await bcrypt.compare(password, user.password))) {
+    throw new Error('Invalid credentials');
+  }
 
-    } catch (e) {
-        // return a Error message describing the reason 
-        console.log("error services",e)
-        throw Error('Error while Paginating Users');
-    }
-}
+  const token = jwt.sign({ id: user._id }, process.env.SECRET, { expiresIn: '2h' });
 
-exports.createUser = async function (user) {
-    // Creating a new Mongoose Object by using the new keyword
-    var hashedPassword = bcrypt.hashSync(user.password, 8);
-    
-    var newUser = new User({
-        name: user.name,
-        email: user.email,
-        date: new Date(),
-        password: hashedPassword
-    })
+  // ← Aquí uso getRedisClient() para obtener la instancia real de Redis
+  const redisClient = getRedisClient();
+  await redisClient.set(`session:${user._id}`, token, {
+    EX: 60 * 60 * 2, // TTL 2 horas
+  });
 
-    try {
-        // Saving the User 
-        var savedUser = await newUser.save();
-        var token = jwt.sign({
-            id: savedUser._id
-        }, process.env.SECRET, {
-            expiresIn: 86400 // expires in 24 hours
-        });
-        return token;
-    } catch (e) {
-        // return a Error message describing the reason 
-        console.log(e)    
-        throw Error("Error while Creating User")
-    }
-}
+  return { token, user };
+};
 
-exports.updateUser = async function (user) {
-    
-    var id = {name :user.name}
-    console.log(id)
-    try {
-        //Find the old User Object by the Id
-        var oldUser = await User.findOne(id);
-        console.log (oldUser)
-    } catch (e) {
-        throw Error("Error occured while Finding the User")
-    }
-    // If no old User Object exists return false
-    if (!oldUser) {
-        return false;
-    }
-    //Edit the User Object
-    var hashedPassword = bcrypt.hashSync(user.password, 8);
-    oldUser.name = user.name
-    oldUser.email = user.email
-    oldUser.password = hashedPassword
-    try {
-        var savedUser = await oldUser.save()
-        return savedUser;
-    } catch (e) {
-        throw Error("And Error occured while updating the User");
-    }
-}
-
-exports.deleteUser = async function (id) {
-    console.log(id)
-    // Delete the User
-    try {
-        var deleted = await User.remove({
-            _id: id
-        })
-        if (deleted.n === 0 && deleted.ok === 1) {
-            throw Error("User Could not be deleted")
-        }
-        return deleted;
-    } catch (e) {
-        throw Error("Error Occured while Deleting the User")
-    }
-}
-
-
-exports.loginUser = async function (user) {
-
-    // Creating a new Mongoose Object by using the new keyword
-    try {
-        // Find the User 
-        console.log("login:",user)
-        var _details = await User.findOne({
-            email: user.email
-        });
-        var passwordIsValid = bcrypt.compareSync(user.password, _details.password);
-        if (!passwordIsValid) return 0;
-
-        var token = jwt.sign({
-            id: _details._id
-        }, process.env.SECRET, {
-            expiresIn: 86400 // expires in 24 hours
-        });
-        return {token:token, user:_details};
-    } catch (e) {
-        // return a Error message describing the reason     
-        throw Error("Error while Login User")
-    }
-
-}
+exports.updateProfile = async (userId, updates) => {
+  return await User.findByIdAndUpdate(userId, updates, { new: true });
+};
