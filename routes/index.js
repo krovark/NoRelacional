@@ -1,9 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-router.get('/', (req, res) => {
-  res.send('🏠 Bienvenido a la API de Red Social');
-});
+const apiRoutes = require('./api');
+
+router.use('/api', apiRoutes);
 
 module.exports = router;
-
