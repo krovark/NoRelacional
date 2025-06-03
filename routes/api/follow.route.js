@@ -7,3 +7,4 @@ router.post('/:id', authorization, followController.followUser);
 router.delete('unfollow/:id', followController.unfollowUser);
 
 module.exports = router;
+
