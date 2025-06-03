@@ -23,14 +23,24 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      'http://localhost:4000',    // si antes tenías frontend aquí
+      'http://127.0.0.1:5500',    // donde abrís tu index.html ahora
+      'http://localhost:5500',    // por si Live Server usa localhost:5500
+      'http://localhost:8080'     // para casos en que pruebes desde el mismo puerto
+    ],
+    credentials: true,
+  })
+);
 
-app.use(function (req, res, next) {
-  res.header("Access-Control-Allow-Origin", "http://localhost:4000");
-  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
-  next();
-});
+// app.use(function (req, res, next) {
+//   res.header("Access-Control-Allow-Origin", "http://localhost:4000");
+//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//   res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+//   next();
+// });
 
 // Rutas
 app.use('/api', apiRouter);
