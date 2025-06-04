@@ -1,4 +1,3 @@
-// services/neo4j.service.js
 const neo4j = require('neo4j-driver');
 const { getDriver } = require('../database/neo');
 
@@ -39,7 +38,7 @@ exports.unfollowUser = async (fromId, toId) => {
   const driver = getDriver();
   if (!driver) throw new Error('Neo4j driver aún no inicializado');
 
-  // Abrimos sesión en modo WRITE para eliminar la relación
+  
   const session = driver.session({ defaultAccessMode: neo4j.session.WRITE });
   try {
     await session.run(
@@ -68,7 +67,8 @@ exports.getFollowers = async (userId) => {
       `,
       { userId }
     );
-    // Extraer solo el array de IDs
+
+
     return result.records.map(record => record.get('id'));
   } finally {
     await session.close();

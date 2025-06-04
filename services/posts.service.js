@@ -1,4 +1,4 @@
-// services/post.service.js
+
 const Post = require('../models/Posts.model');
 
 exports.createPost = async (userId, data) => {

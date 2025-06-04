@@ -1,12 +1,11 @@
-// services/userService.js
 const User = require('../models/User.model');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { getRedisClient } = require('../database/redis'); // ← Desestructuramos
+const { getRedisClient } = require('../database/redis'); 
 
 exports.register = async ({ username, email, password }) => {
   const userExists = await User.findOne({ email });
-  if (userExists) throw new Error('Email already in use');
+  if (userExists) throw new Error('Email ya en uso');
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const user = new User({ username, email, password: hashedPassword });
@@ -16,15 +15,15 @@ exports.register = async ({ username, email, password }) => {
 exports.login = async ({ email, password }) => {
   const user = await User.findOne({ email });
   if (!user || !(await bcrypt.compare(password, user.password))) {
-    throw new Error('Invalid credentials');
+    throw new Error('Credentials invalidas');
   }
 
   const token = jwt.sign({ id: user._id }, process.env.SECRET, { expiresIn: '2h' });
 
-  // ← Aquí uso getRedisClient() para obtener la instancia real de Redis
+
   const redisClient = getRedisClient();
   await redisClient.set(`session:${user._id}`, token, {
-    EX: 60 * 60 * 2, // TTL 2 horas
+    EX: 60 * 60 * 2, //  2 horas
   });
 
   return { token, user };
