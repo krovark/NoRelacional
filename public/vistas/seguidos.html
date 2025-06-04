@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Red Social - Seguidos</title>
+</head>
+<body>
+  <h1>Seguidos</h1>
+
+  <!-- Navegación rápida -->
+  <nav>
+    <a href="mainMenu.html">Main Menu</a> |
+    <a href="miperfil.html">Mi Perfil</a> |
+    <a href="seguidores.html">Seguidores</a>
+  </nav>
+  <hr />
+
+  <!-- Verificar token al cargar la página -->
+  <!-- <script>
+    const jwtToken = localStorage.getItem('jwtToken');
+    if (!jwtToken) {
+      window.location.href = 'index.html';
+    }
+  </script> -->
+
+  <!-- Botón para refrescar lista de seguidos -->
+  <section>
+    <button id="refreshFollowing">Refrescar seguidos</button>
+  </section>
+
+  <!-- Contenedor donde se mostrará la lista de usuarios seguidos -->
+  <section>
+    <h2>Usuarios que seguís</h2>
+    <div id="followingContainer">
+      <!-- Aquí se inyectarán los usuarios -->
+    </div>
+  </section>
+
+  <script>
+    const API_BASE = 'http://localhost:8080/api';
+    const token = localStorage.getItem('jwtToken');
+
+    /**
+     * Crea un elemento HTML para mostrar un usuario seguido,
+     * con botón para dejar de seguir.
+     * @param {string} userId  ID del usuario seguido.
+     * @returns {HTMLElement}
+     */
+    function renderFollowing(userId) {
+      const userDiv = document.createElement('div');
+      userDiv.style.border = '1px solid #000';
+      userDiv.style.padding = '8px';
+      userDiv.style.marginBottom = '10px';
+
+      // Mostrar el ID del usuario seguido
+      const idPara = document.createElement('p');
+      idPara.textContent = `ID de usuario: ${userId}`;
+      userDiv.appendChild(idPara);
+
+      // Botón para dejar de seguir
+      const unfollowBtn = document.createElement('button');
+      unfollowBtn.textContent = 'Dejar de seguir';
+      unfollowBtn.style.marginTop = '6px';
+      unfollowBtn.addEventListener('click', async () => {
+        if (confirm('¿Querés dejar de seguir a este usuario?')) {
+          await unfollowUser(userId);
+        }
+      });
+      userDiv.appendChild(unfollowBtn);
+
+      return userDiv;
+    }
+
+    /**
+     * Obtiene la lista de IDs de usuarios que el logueado sigue,
+     * y la muestra en pantalla.
+     */
+    async function fetchFollowing() {
+      const container = document.getElementById('followingContainer');
+      container.innerHTML = 'Cargando...';
+
+      try {
+        const res = await fetch(`${API_BASE}/follow/following`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': token
+          }
+        });
+        const data = await res.json();
+
+        container.innerHTML = '';
+        if (Array.isArray(data.following) && data.following.length > 0) {
+          data.following.forEach(userId => {
+            const element = renderFollowing(userId);
+            container.appendChild(element);
+          });
+        } else {
+          container.textContent = 'No estás siguiendo a ningún usuario.';
+        }
+      } catch (err) {
+        container.textContent = 'Error al obtener la lista de seguidos.';
+        console.error('Error en fetchFollowing:', err);
+      }
+    }
+
+    /**
+     * Llama al endpoint para dejar de seguir a userId,
+     * y luego refresca la lista.
+     * @param {string} userId
+     */
+    async function unfollowUser(userId) {
+      try {
+        const res = await fetch(`${API_BASE}/follow/unfollow/${userId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': token
+          }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          // Refrescar la lista después de dejar de seguir
+          await fetchFollowing();
+        } else {
+          alert(data.error || 'Error al dejar de seguir');
+        }
+      } catch (err) {
+        console.error('Error en unfollowUser:', err);
+        alert('Error de red al intentar dejar de seguir');
+      }
+    }
+
+    // Evento: refrescar la lista manualmente
+    document.getElementById('refreshFollowing').addEventListener('click', fetchFollowing);
+
+    // Cargar la lista al abrir la página
+    document.addEventListener('DOMContentLoaded', fetchFollowing);
+  </script>
+</body>
+</html>

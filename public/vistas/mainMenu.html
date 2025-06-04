@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Red Social - Main Menu</title>
+</head>
+<body>
+  <h1>Home</h1>
+
+  <!-- Navegación rápida -->
+  <nav>
+    <a href="miperfil.html">Ir al perfil</a> |
+    <a href="seguidores.html">Seguidores</a> |
+    <a href="seguidos.html">Seguidos</a>
+  </nav>
+  <hr />
+
+  <!-- Verificar token al cargar la página -->
+  <!-- <script>
+    // Si no hay token JWT en localStorage, redirigir al login
+    const jwtToken = localStorage.getItem('jwtToken');
+    if (!jwtToken) {
+      window.location.href = 'index.html';
+    }
+  </script> -->
+
+  <!-- Sección para crear un nuevo post -->
+  <section>
+    <h2>Crear un nuevo post</h2>
+    <form id="postForm">
+      <textarea id="postText" rows="4" cols="50" placeholder="¿Qué estás pensando?" required></textarea>
+      <br />
+      <button type="submit">Publicar</button>
+    </form>
+  </section>
+
+  <!-- Botón para refrescar manualmente los posts -->
+  <section>
+    <button id="refreshBtn">Refrescar publicaciones</button>
+  </section>
+
+  <!-- Sección donde se mostrarán los posts -->
+  <section>
+    <h2>Timeline</h2>
+    <div id="postsContainer">
+      <!-- Aquí se inyectarán los posts -->
+    </div>
+  </section>
+
+  <script>
+    const API_BASE = 'http://localhost:8080/api';
+    const token = localStorage.getItem('jwtToken');
+
+    // Función para mostrar un post en el contenedor
+    function renderPost(post) {
+      /*
+        Se asume que cada objeto "post" tiene esta forma:
+        {
+          _id: "...",
+          userId: { username: "nombreUsuario", profilePicture: "URL" },
+          text: "Contenido del post",
+          createdAt: "2025-06-10T12:34:56.789Z",
+          likes: [...], // no mostramos aquí
+          // comments: [...] (no consideramos comentarios en este ejemplo)
+        }
+      */
+      const postDiv = document.createElement('div');
+      postDiv.style.border = '1px solid #000';
+      postDiv.style.padding = '8px';
+      postDiv.style.marginBottom = '10px';
+
+      // Nombre de usuario y fecha
+      const header = document.createElement('div');
+      header.style.fontWeight = 'bold';
+      header.textContent = `${post.userId.username} - ${new Date(post.createdAt).toLocaleString()}`;
+      postDiv.appendChild(header);
+
+      // Texto del post
+      const body = document.createElement('p');
+      body.textContent = post.text;
+      postDiv.appendChild(body);
+
+      return postDiv;
+    }
+
+    // Función para obtener todos los posts y mostrarlos
+    async function fetchPosts() {
+      const container = document.getElementById('postsContainer');
+      container.innerHTML = 'Cargando publicaciones...';
+
+      try {
+        const res = await fetch(`${API_BASE}/posts`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': token
+          }
+        });
+        const posts = await res.json();
+
+        container.innerHTML = ''; // Limpiar contenedor
+        if (Array.isArray(posts) && posts.length > 0) {
+          // Mostrar cada post
+          posts.forEach(post => {
+            const postElement = renderPost(post);
+            container.appendChild(postElement);
+          });
+        } else {
+          container.textContent = 'No hay publicaciones para mostrar.';
+        }
+      } catch (err) {
+        container.textContent = 'Error al cargar publicaciones.';
+        console.error('Error en fetchPosts:', err);
+      }
+    }
+
+    // Función para crear un post
+    async function createPost(text) {
+      try {
+        const res = await fetch(`${API_BASE}/posts`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': token
+          },
+          body: JSON.stringify({ text })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          // Después de crear, refrescar automáticamente
+          await fetchPosts();
+          document.getElementById('postText').value = '';
+        } else {
+          alert(data.error || 'Error al crear la publicación');
+        }
+      } catch (err) {
+        console.error('Error en createPost:', err);
+        alert('Error de red al crear la publicación');
+      }
+    }
+
+    // Evento "submit" del formulario de post
+    document.getElementById('postForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = document.getElementById('postText').value.trim();
+      if (text) {
+        await createPost(text);
+      }
+    });
+
+    // Evento del botón "Refrescar publicaciones"
+    document.getElementById('refreshBtn').addEventListener('click', fetchPosts);
+
+    // Al cargar la página, obtener y mostrar los posts
+    document.addEventListener('DOMContentLoaded', fetchPosts);
+  </script>
+</body>
+</html>
