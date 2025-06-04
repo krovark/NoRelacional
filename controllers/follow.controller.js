@@ -45,3 +45,28 @@ exports.unfollowUser = async (req, res) => {
     return res.status(500).json({ error: 'No se pudo dejar de seguir al usuario' });
   }
 };
+
+
+exports.getFollowers = async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const followersList = await neo4jService.getFollowers(userId);
+    return res.json({ userId, followers: followersList });
+  } catch (err) {
+    console.error('Error en getFollowers:', err);
+    return res.status(500).json({ error: 'No se pudo obtener la lista de seguidores' });
+  }
+};
+
+exports.getFollowing = async (req, res) => {
+  const userId = req.userId;
+
+  try {
+    const followingList = await neo4jService.getFollowing(userId);
+    return res.json({ userId, following: followingList });
+  } catch (err) {
+    console.error('Error en getFollowing:', err);
+    return res.status(500).json({ error: 'No se pudo obtener la lista de seguidos' });
+  }
+};

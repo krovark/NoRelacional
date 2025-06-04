@@ -53,3 +53,44 @@ exports.unfollowUser = async (fromId, toId) => {
     await session.close();
   }
 };
+
+
+exports.getFollowers = async (userId) => {
+  const driver = getDriver();
+  if (!driver) throw new Error('Neo4j driver aún no inicializado');
+
+  const session = driver.session({ defaultAccessMode: neo4j.session.READ });
+  try {
+    const result = await session.run(
+      `
+      MATCH (f:User)-[:FOLLOWS]->(u:User {id: $userId})
+      RETURN f.id AS id
+      `,
+      { userId }
+    );
+    // Extraer solo el array de IDs
+    return result.records.map(record => record.get('id'));
+  } finally {
+    await session.close();
+  }
+};
+
+
+exports.getFollowing = async (userId) => {
+  const driver = getDriver();
+  if (!driver) throw new Error('Neo4j driver aún no inicializado');
+
+  const session = driver.session({ defaultAccessMode: neo4j.session.READ });
+  try {
+    const result = await session.run(
+      `
+      MATCH (u:User {id: $userId})-[:FOLLOWS]->(f:User)
+      RETURN f.id AS id
+      `,
+      { userId }
+    );
+    return result.records.map(record => record.get('id'));
+  } finally {
+    await session.close();
+  }
+};
