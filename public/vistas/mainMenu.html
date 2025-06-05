@@ -16,13 +16,13 @@
   <hr />
 
   <!-- Verificar token al cargar la página -->
-  <!-- <script>
+  <script>
     // Si no hay token JWT en localStorage, redirigir al login
     const jwtToken = localStorage.getItem('jwtToken');
     if (!jwtToken) {
       window.location.href = 'index.html';
     }
-  </script> -->
+  </script>
 
   <!-- Sección para crear un nuevo post -->
   <section>
@@ -89,7 +89,7 @@
       container.innerHTML = 'Cargando publicaciones...';
 
       try {
-        const res = await fetch(`${API_BASE}/posts`, {
+        const res = await fetch(`${API_BASE}/posts/getPost`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -117,7 +117,7 @@
     // Función para crear un post
     async function createPost(text) {
       try {
-        const res = await fetch(`${API_BASE}/posts`, {
+        const res = await fetch(`${API_BASE}/posts/createPost`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

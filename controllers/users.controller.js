@@ -38,3 +38,13 @@ exports.updateProfile = async (req, res) => {
     res.status(400).json({ error: err.message });
   }
 };
+
+exports.getAllUsers = async (req, res) => {
+  try {
+    const users = await userService.getAllUsers();
+  
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: 'No se pudieron obtener los usuarios' });
+  }
+};

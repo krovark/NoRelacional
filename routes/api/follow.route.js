@@ -4,7 +4,7 @@ const followController = require('../../controllers/follow.controller');
 const authorization = require('../../middleware/authorization');
 
 router.post('/:id', authorization, followController.followUser);
-router.delete('unfollow/:id', followController.unfollowUser);
+router.delete('/unfollow/:id',authorization ,followController.unfollowUser);
 router.get('/followers', authorization, followController.getFollowers);
 router.get('/following', authorization, followController.getFollowing);
 

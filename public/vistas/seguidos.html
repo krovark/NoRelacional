@@ -16,12 +16,18 @@
   <hr />
 
   <!-- Verificar token al cargar la página -->
-  <!-- <script>
+  <script>
     const jwtToken = localStorage.getItem('jwtToken');
     if (!jwtToken) {
       window.location.href = 'index.html';
     }
-  </script> -->
+  </script>
+
+  <!-- Sección: Seguir por ID manualmente -->
+  <section>
+    <input type="text" id="followIdInput" placeholder="Introduce ID de usuario a seguir" />
+    <button id="btnFollow">Seguir usuario</button>
+  </section>
 
   <!-- Botón para refrescar lista de seguidos -->
   <section>
@@ -32,7 +38,15 @@
   <section>
     <h2>Usuarios que seguís</h2>
     <div id="followingContainer">
-      <!-- Aquí se inyectarán los usuarios -->
+      <!-- Aquí se inyectarán los usuarios seguidos -->
+    </div>
+  </section>
+
+  <!-- Contenedor de sugerencias -->
+  <section>
+    <h2>Sugerencias</h2>
+    <div id="suggestionsContainer">
+      <!-- Aquí se inyectarán las sugerencias de usuarios -->
     </div>
   </section>
 
@@ -52,12 +66,10 @@
       userDiv.style.padding = '8px';
       userDiv.style.marginBottom = '10px';
 
-      // Mostrar el ID del usuario seguido
       const idPara = document.createElement('p');
       idPara.textContent = `ID de usuario: ${userId}`;
       userDiv.appendChild(idPara);
 
-      // Botón para dejar de seguir
       const unfollowBtn = document.createElement('button');
       unfollowBtn.textContent = 'Dejar de seguir';
       unfollowBtn.style.marginTop = '6px';
@@ -72,8 +84,39 @@
     }
 
     /**
+     * Crea un elemento HTML para sugerir un usuario,
+     * con botón para seguir.
+     * @param {{_id: string, username: string}} user  Objeto con _id y username.
+     * @returns {HTMLElement}
+     */
+    function renderSuggestion(user) {
+      const userDiv = document.createElement('div');
+      userDiv.style.border = '1px dashed #666';
+      userDiv.style.padding = '8px';
+      userDiv.style.marginBottom = '8px';
+
+      const infoPara = document.createElement('p');
+      infoPara.textContent = `${user.username} (ID: ${user._id})`;
+      userDiv.appendChild(infoPara);
+
+      const followBtn = document.createElement('button');
+      followBtn.textContent = 'Seguir';
+      followBtn.style.marginTop = '6px';
+      followBtn.addEventListener('click', async () => {
+        if (confirm(`¿Querés seguir a ${user.username}?`)) {
+          await followUser(user._id);
+        }
+      });
+      userDiv.appendChild(followBtn);
+
+      return userDiv;
+    }
+
+    let currentFollowing = []; // Array de IDs que el usuario ya sigue
+
+    /**
      * Obtiene la lista de IDs de usuarios que el logueado sigue,
-     * y la muestra en pantalla.
+     * y la muestra en pantalla. También actualiza currentFollowing.
      */
     async function fetchFollowing() {
       const container = document.getElementById('followingContainer');
@@ -91,13 +134,17 @@
 
         container.innerHTML = '';
         if (Array.isArray(data.following) && data.following.length > 0) {
+          currentFollowing = data.following; // actualizar la lista global
           data.following.forEach(userId => {
             const element = renderFollowing(userId);
             container.appendChild(element);
           });
         } else {
+          currentFollowing = [];
           container.textContent = 'No estás siguiendo a ningún usuario.';
         }
+        // Después de listar seguimientos, actualizar sugerencias
+        fetchSuggestions();
       } catch (err) {
         container.textContent = 'Error al obtener la lista de seguidos.';
         console.error('Error en fetchFollowing:', err);
@@ -105,8 +152,48 @@
     }
 
     /**
+     * Obtiene la lista de todos los usuarios y filtra
+     * aquellos que el usuario logueado NO sigue y que no sea él mismo.
+     * Luego los muestra como sugerencias.
+     */
+    async function fetchSuggestions() {
+      const container = document.getElementById('suggestionsContainer');
+      container.innerHTML = 'Cargando sugerencias...';
+
+      try {
+        const res = await fetch(`${API_BASE}/user/all`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': token
+          }
+        });
+        const users = await res.json();
+
+        container.innerHTML = '';
+        const jwtData = parseJwt(token);
+        const meId = jwtData.id; // ID del usuario logueado
+
+        // Filtrar fuera a uno mismo y a los ya seguidos
+        const suggestions = users.filter(u => u._id !== meId && !currentFollowing.includes(u._id));
+
+        if (suggestions.length > 0) {
+          suggestions.forEach(user => {
+            const element = renderSuggestion(user);
+            container.appendChild(element);
+          });
+        } else {
+          container.textContent = 'No hay usuarios para sugerir.';
+        }
+      } catch (err) {
+        container.textContent = 'Error al cargar sugerencias.';
+        console.error('Error en fetchSuggestions:', err);
+      }
+    }
+
+    /**
      * Llama al endpoint para dejar de seguir a userId,
-     * y luego refresca la lista.
+     * y luego refresca la lista de seguidos.
      * @param {string} userId
      */
     async function unfollowUser(userId) {
@@ -120,7 +207,6 @@
         });
         const data = await res.json();
         if (res.ok) {
-          // Refrescar la lista después de dejar de seguir
           await fetchFollowing();
         } else {
           alert(data.error || 'Error al dejar de seguir');
@@ -131,11 +217,65 @@
       }
     }
 
+    /**
+     * Llama al endpoint para seguir a userId,
+     * y luego refresca la lista de seguidos.
+     * @param {string} userId
+     */
+    async function followUser(userId) {
+      try {
+        const res = await fetch(`${API_BASE}/follow/${userId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': token
+          }
+        });
+        const data = await res.json();
+        if (res.ok) {
+          await fetchFollowing();
+        } else {
+          alert(data.error || 'Error al seguir al usuario');
+        }
+      } catch (err) {
+        console.error('Error en followUser:', err);
+        alert('Error de red al intentar seguir');
+      }
+    }
+
+    /**
+     * Al hacer click en el botón "Seguir usuario", toma el ID del input
+     * y llama a followUser.
+     */
+    document.getElementById('btnFollow').addEventListener('click', async () => {
+      const input = document.getElementById('followIdInput');
+      const userId = input.value.trim();
+      if (userId) {
+        await followUser(userId);
+        input.value = '';
+      } else {
+        alert('Ingresá un ID válido');
+      }
+    });
+
     // Evento: refrescar la lista manualmente
     document.getElementById('refreshFollowing').addEventListener('click', fetchFollowing);
 
-    // Cargar la lista al abrir la página
+    // Al cargar la página, obtenemos y mostramos las publicaciones propias
     document.addEventListener('DOMContentLoaded', fetchFollowing);
+
+    /**
+     * Función auxiliar para decodificar el payload de un JWT sin verificarlo.
+     * Solo para extraer el campo "id" del usuario.
+     */
+    function parseJwt(token) {
+      const base64Url = token.split('.')[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      return JSON.parse(jsonPayload);
+    }
   </script>
 </body>
 </html>

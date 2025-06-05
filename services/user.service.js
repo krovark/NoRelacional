@@ -32,3 +32,8 @@ exports.login = async ({ email, password }) => {
 exports.updateProfile = async (userId, updates) => {
   return await User.findByIdAndUpdate(userId, updates, { new: true });
 };
+
+exports.getAllUsers = async () => {
+ 
+  return await User.find({}, { username: 1 });
+};
