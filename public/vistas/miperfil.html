@@ -11,16 +11,42 @@
   <nav>
     <a href="mainMenu.html">Main Menu</a> |
     <a href="seguidores.html">Seguidores</a> |
-    <a href="seguidos.html">Seguidos</a>
+    <a href="seguidos.html">Seguidos</a> |
+    <a href="#" id="logoutLink">Cerrar sesión</a>
   </nav>
   <hr />
 
   <!-- Verificar token al cargar la página -->
   <script>
-    const jwtToken = localStorage.getItem('jwtToken');
-    if (!jwtToken) {
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
       window.location.href = 'index.html';
     }
+
+    // Función de logout
+    async function logout() {
+      try {
+        await fetch('http://localhost:8080/api/user/logout', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': token
+          }
+        });
+      } catch (err) {
+        console.error('Error en logout:', err);
+      } finally {
+        localStorage.removeItem('jwtToken');
+        window.location.href = 'index.html';
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('logoutLink').addEventListener('click', e => {
+        e.preventDefault();
+        logout();
+      });
+    });
   </script>
 
   <!-- Sección: Mis publicaciones -->
@@ -34,32 +60,23 @@
 
   <script>
     const API_BASE = 'http://localhost:8080/api';
-    const token = localStorage.getItem('jwtToken');
 
-    /**
-     * Crea un elemento HTML que muestra un post propio, con botón de eliminar.
-     * @param {Object} post  Objeto post retornado por la API.
-     * @returns {HTMLElement} Elemento contenedor del post.
-     */
     function renderMyPost(post) {
       const postDiv = document.createElement('div');
       postDiv.style.border = '1px solid #000';
       postDiv.style.padding = '8px';
       postDiv.style.marginBottom = '10px';
 
-      // Texto del post
       const body = document.createElement('p');
       body.textContent = post.text;
       postDiv.appendChild(body);
 
-      // Fecha de creación
       const dateDiv = document.createElement('div');
       dateDiv.style.fontSize = '0.9em';
       dateDiv.style.color = '#555';
       dateDiv.textContent = `Publicado el: ${new Date(post.createdAt).toLocaleString()}`;
       postDiv.appendChild(dateDiv);
 
-      // Botón para eliminar
       const deleteBtn = document.createElement('button');
       deleteBtn.textContent = 'Eliminar';
       deleteBtn.style.marginTop = '6px';
@@ -73,9 +90,6 @@
       return postDiv;
     }
 
-    /**
-     * Obtiene las publicaciones propias del usuario logueado y las muestra.
-     */
     async function fetchMyPosts() {
       const container = document.getElementById('myPostsContainer');
       container.innerHTML = 'Cargando tus publicaciones...';
@@ -93,8 +107,7 @@
         container.innerHTML = '';
         if (Array.isArray(posts) && posts.length > 0) {
           posts.forEach(post => {
-            const postElement = renderMyPost(post);
-            container.appendChild(postElement);
+            container.appendChild(renderMyPost(post));
           });
         } else {
           container.textContent = 'Aún no tienes publicaciones.';
@@ -105,10 +118,6 @@
       }
     }
 
-    /**
-     * Elimina un post propio por su ID y luego refresca la lista.
-     * @param {string} postId
-     */
     async function deletePost(postId) {
       try {
         const res = await fetch(`${API_BASE}/posts/delete/${postId}`, {
@@ -120,7 +129,6 @@
         });
         const data = await res.json();
         if (res.ok) {
-          // Refrescar lista tras eliminar
           await fetchMyPosts();
         } else {
           alert(data.error || 'Error al eliminar la publicación');
@@ -131,10 +139,7 @@
       }
     }
 
-    // Evento: refrescar mis publicaciones
     document.getElementById('refreshMyPosts').addEventListener('click', fetchMyPosts);
-
-    // Al cargar la página, obtenemos y mostramos las publicaciones propias
     document.addEventListener('DOMContentLoaded', fetchMyPosts);
   </script>
 </body>

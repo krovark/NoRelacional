@@ -1,23 +1,15 @@
+// database/mongo.js
 const mongoose = require('mongoose');
 require('dotenv').config();
 
 const connectMongo = async () => {
   try {
-    const {
-      DB_USER,
-      DB_PASSWORD,
-      DB_HOST,
-      DB_NAME,
-      DB_RETRY_WRITES,
-      DB_WRITE_CONCERN,
-      DB_APP_NAME
-    } = process.env;
+    // Leemos la URI completa de .env, o caemos en el fallback local
+    const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/redsocial';
 
-    const url = `mongodb+srv://redsocial:1234@clusterredsocial.hyfo2lt.mongodb.net/?retryWrites=true&w=majority&appName=ClusterRedSocial`;
-
-    await mongoose.connect(url, {
+    await mongoose.connect(uri, {
       connectTimeoutMS: 20000,
-      useNewUrlParser: true,
+      useNewUrlParser:    true,
       useUnifiedTopology: true
     });
 
@@ -28,4 +20,3 @@ const connectMongo = async () => {
 };
 
 module.exports = connectMongo;
-

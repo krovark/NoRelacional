@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Red Social - Seguidores</title>
+</head>
+<body>
+  <h1>Seguidores</h1>
+
+  <!-- Navegación rápida -->
+  <nav>
+    <a href="mainMenu.html">Home</a> |
+    <a href="miperfil.html">Mi Perfil</a> |
+    <a href="seguidos.html">Seguidos</a>
+  </nav>
+  <hr />
+
+  <!-- Verificar token al cargar la página -->
+  <script>
+    const token = localStorage.getItem('jwtToken');
+    if (!token) {
+      window.location.href = 'index.html';
+    }
+  </script>
+
+  <!-- Botón para refrescar manualmente la lista de seguidores -->
+  <section>
+    <button id="refreshFollowers">Refrescar seguidores</button>
+  </section>
+
+  <!-- Contenedor donde se mostrará la lista de seguidores -->
+  <section>
+    <h2>Usuarios que te siguen</h2>
+    <div id="followersContainer">
+      <!-- Aquí se inyectarán los IDs de los seguidores -->
+    </div>
+  </section>
+
+  <script>
+    const API_BASE = 'http://localhost:8080/api';
+
+    /**
+     * Renderiza un seguidor en el contenedor.
+     * @param {string} userId
+     * @returns {HTMLElement}
+     */
+    function renderFollower(userId) {
+      const div = document.createElement('div');
+      div.style.border = '1px solid #000';
+      div.style.padding = '8px';
+      div.style.marginBottom = '6px';
+      div.textContent = `ID de usuario: ${userId}`;
+      return div;
+    }
+
+    /**
+     * Obtiene y muestra la lista de seguidores desde el endpoint.
+     */
+    async function fetchFollowers() {
+      const container = document.getElementById('followersContainer');
+      container.innerHTML = 'Cargando seguidores…';
+      try {
+        const res = await fetch(`${API_BASE}/follow/followers`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-access-token': token
+          }
+        });
+        const data = await res.json();
+        container.innerHTML = '';
+        if (Array.isArray(data.followers) && data.followers.length > 0) {
+          data.followers.forEach(id => {
+            container.appendChild(renderFollower(id));
+          });
+        } else {
+          container.textContent = 'Nadie te está siguiendo aún.';
+        }
+      } catch (err) {
+        container.textContent = 'Error al cargar seguidores.';
+        console.error('Error en fetchFollowers:', err);
+      }
+    }
+
+    // Evento para refrescar manualmente
+    document.getElementById('refreshFollowers').addEventListener('click', fetchFollowers);
+
+    // Al cargar la página, obtenemos la lista
+    document.addEventListener('DOMContentLoaded', fetchFollowers);
+  </script>
+</body>
+</html>
