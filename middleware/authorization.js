@@ -1,6 +1,6 @@
 // middleware/authorization.js
 const jwt = require('jsonwebtoken');
-const { getRedisClient } = require('../database/redis'); // ← Desestructuramos
+const { getRedisClient } = require('../database/redis'); 
 
 const authorization = async (req, res, next) => {
   const token = req.headers['x-access-token'];
@@ -9,7 +9,7 @@ const authorization = async (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.SECRET);
 
-    // ← nuevamente: obtenemos el client real
+  
     const redisClient = getRedisClient();
     const redisToken = await redisClient.get(`session:${decoded.id}`);
     if (!redisToken || redisToken !== token) {

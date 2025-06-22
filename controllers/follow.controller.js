@@ -1,14 +1,14 @@
 const neo4jService = require('../services/neo4j.service');
 
 exports.followUser = async (req, res) => {
-  const fromId = req.userId;          // viene del middleware de autorización
+  const fromId = req.userId;          // viene del middleware
   const toId = req.params.id;
 
   if (fromId === toId) {
     return res.status(400).json({ error: 'No podés seguirte a vos mismo.' });
   }
 
-  // En lugar de req.user.id, uso la variable fromId
+  
   console.log('→ Llega a followController:', { fromId, toId });
 
   try {
@@ -25,7 +25,7 @@ exports.followUser = async (req, res) => {
 };
 
 exports.unfollowUser = async (req, res) => {
-  const fromId = req.userId;      // viene de tu middleware de autorización
+  const fromId = req.userId;      // viene del middleware
   const toId = req.params.id;
 
   if (fromId === toId) {
@@ -35,7 +35,7 @@ exports.unfollowUser = async (req, res) => {
   console.log('→ Llega a unfollowController:', { fromId, toId });
 
   try {
-    // Este MERGE fue en el follow; ahora borramos la relación
+    
     await neo4jService.unfollowUser(fromId, toId);
 
     console.log('→ Unfollow exitoso:', { fromId, toId });

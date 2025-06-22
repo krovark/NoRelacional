@@ -2,7 +2,7 @@
 const { createClient } = require('redis');
 require('dotenv').config();
 
-let client;  // lo inicializamos aquí para poder usarlo en otros lugares
+let client;  
 
 async function connectRedis() {
   client = createClient({

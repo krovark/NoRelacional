@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const connectMongo = async () => {
   try {
-    // Leemos la URI completa de .env, o caemos en el fallback local
+    
     const uri = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/redsocial';
 
     await mongoose.connect(uri, {
